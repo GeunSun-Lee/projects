@@ -804,18 +804,36 @@
         }
 
         /** 
-         * 데이터 백업 및 복구 (JSON)
+         * 데이터 백업 (파일명에 날짜-시간 포함)
          */
         function exportData() {
             const transaction = db.transaction([STORE_NAME], "readonly");
             const store = transaction.objectStore(STORE_NAME);
+
             store.getAll().onsuccess = (e) => {
-                const blob = new Blob([JSON.stringify(e.target.result, null, 2)], { type: "application/json" });
+                const data = e.target.result;
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
+
+                // --- 날짜 및 시간 포맷팅 시작 ---
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+
+                // 파일명 예: kanban-backup-2026-08-01_09-00-00.json
+                const fileName = `kanban-backup-${year}-${month}-${day}_${hours}-${minutes}-${seconds}.json`;
+                // --- 날짜 및 시간 포맷팅 끝 ---
+
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `kanban-backup.json`;
+                a.download = fileName;
                 a.click();
+
+                // 메모리 누수 방지를 위해 URL 객체 해제
                 URL.revokeObjectURL(url);
             };
         }
