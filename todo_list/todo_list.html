@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>🗒️ IndexedDB Todo List</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#f5f6fa; --card:#fff; --text:#222;
+  --accent:#4a90e2; --border:#ddd; --item:#fff;
+  --done:#777; --shadow:0 4px 12px rgba(0,0,0,.08);
+}
+body.dark{
+  --bg:#151515; --card:#2a2a2a; --text:#e0e0e0;
+  --accent:#6ab0ff; --border:#444; --item:#3a3a3a;
+  --done:#999; --shadow:0 4px 12px rgba(0,0,0,.3);
+}
+body{
+  font-family:'Pretendard','Helvetica','Arial',sans-serif;
+  background:var(--bg); color:var(--text);
+  display:flex;justify-content:center;padding:20px;
+  transition:background .3s,color .3s;
+}
+.container{
+  max-width:800px;width:100%;background:var(--card);
+  border-radius:12px;padding:25px;box-shadow:var(--shadow);
+}
+header{display:flex;justify-content:space-between;align-items:center;}
+h1{margin:0;font-weight:600;}
+button{cursor:pointer;}
+#themeBtn{background:none;border:1px solid var(--border);
+  color:var(--text);border-radius:8px;padding:4px 10px;}
+.input-area{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px;}
+.input-area inputinput-area select{
+  padding:8px 10px;border:1px solid var(--border);
+  border-radius:6px;background:var(--item);color:var(--text);}
+.input-area button{background:var(--accent);color:#fff;
+  border:none;border-radius:6px;padding:8px 12px;}
+.search-filter{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0;
+  align-items:center;}
+.search-filter input{flex:1;min-width:150px;}
+.filter-group button{
+  border:none;background:none;color:var(--done);padding:4px 8px;}
+.filter-group .active{color:var(--accent);font-weight:600;}
+ul#taskList{list-style:none;margin:0;padding:0;}
+li.task-item{
+  display:flex;align-items:center;gap:8px;
+  background:var(--item);border:1px solid var(--border);
+  border-radius:8px;padding:10px;margin-bottom:8px;
+}
+li.task-item.done .title{text-decoration:line-through;color:var(--done);}
+.title{flex:1;}
+.badge{font-size:.75rem;padding:2px 6px;border-radius:4px;color:#fff;}
+.badge.high{background:#e53935;}
+.badge.mid{background:#fb8c00;}
+.badge.low{background:#43a047;}
+.actions button{
+  border:none;background:none;color:var(--done);font-size:.85rem;}
+.actions button:hover{color:var(--accent);}
+.points{font-size:1rem;color:var(--accent);}
+@media (max-width:620px){.input-area{flex-direction 
+</style>
+</head>
+<body class="light">
+
+<div class="container" aria-label="Todo List 애플리케이션">
+<header>
+  <h1>🗒️ IndexedDB Todo List</h1>
+  <button id="themeBtn" aria-label="다크 모드 전환">🌙</button>
+</header>
+
+<div class="input-area">
+  <input id="txtInput" type="text" placeholder="할 일을 입력하세요" aria-label="새 작업 입력">
+  <select id="prioSelect" aria-label="우선순위 선택">
+    <option value="low">낮음</option>
+    <option value="mid" selected>중간</option>
+    <option value="high">높음</option>
+  </select>
+  <button id="addBtn">추가</button>
+</div>
+
+<div class="search-filter">
+  <input id="searchInput" type="search" placeholder="키워드 검색…" aria-label="작업 검색">
+  <div class="filter-group">
+    <button data-filter="all" class="active">전체</button>
+    <button data-filter="active">진행 중</button>
+    <button data-filter="done">완료</button>
+  </div>
+  <div class="filter-group">
+    <button data-prio="all" class="active">전체 우선순위</button>
+    <button data-prio="high">높음</button>
+    <button data-prio="mid">중간</button>
+    <button data-prio="low">낮음</button>
+  </div>
+</div>
+
+<ul id="taskList" aria-live="polite"></ul>
+
+<div style="margin-top:15px;">
+  <button id="exportBtn">백업(JSON)</button>
+  <input type="file" id="importFile" accept=".json" style="display:none;">
+  <button id="importBtn">복구</button>
+</div>
+
+<div class="points">포인트 : <span id="pointVal">0</span></div>
+</div> <!-- /.container -->
+
+<script>
+// ---------- 헬퍼 ----------
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+// ---------- IndexedDB 설정 ----------
+const DB_NAME = 'TodoIndexedDB';
+const STORE_NAME = 'tasks';
+let db = null;
+
+// DB 초기화
+function initDB(){
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    request.onerror = () => reject('IndexedDB 연결 실패');
+    request.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)){
+        const store = db.createObjectStore(STORE_NAME, {keyPath:'id',autoIncrement:true});
+        store.createIndex('order', 'order', {unique:false});
+      }
+    };
+    request.onsuccess = e => {
+      db = e.target.result;
+      resolve();
+    };
+  });
+}
+
+// 전체 레코드 조회
+function getAllTasks(){
+  return new Promise(r => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.getAll();
+    req.onsuccess = e => r(e.target.result);
+  });
+}
+
+// 단일 레코드 추가
+function addTaskRecord(task){
+  return new Promise(r => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.add(task);
+    req.onsuccess = e => r(e.target.result);   // 새로운 id 반환
+  });
+}
+
+// 레코드 수정(put)
+function putTaskRecord(task){
+  return new Promise(r => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.put(task);
+    req.onsuccess = () => r();
+  });
+}
+
+// 레코드 삭제
+function deleteTaskRecord(id){
+  return new Promise(r => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.delete(id);
+    req.onsuccess = () => r();
+  });
+}
+
+// ---------- 전역 상태 ----------
+let tasks = [];               // 메모리 캐시
+let curFilter = 'all';
+let curPrio   = 'all';
+let point = Number(localStorage.getItem('todo_point')) || 0;
+
+// ---------- 렌더링 ----------
+function render(){
+  const list = $('#taskList');
+  list.innerHTML = '';
+
+  const kw = $('#searchInput').value.trim().toLowerCase();
+  const filtered = tasks.filter(t => {
+    const txtMatch = t.title.toLowerCase().includes(kw);
+    const statMatch = curFilter === 'all' ? true :
+                      curFilter === 'active' ? !t.done : t.done;
+    const prioMatch = curPrio === 'all' ? true : t.priority === curPrio;
+    return txtMatch && statMatch && prioMatch;
+  });
+
+  // 정렬 : 사용자가 지정한 order + 우선순위 (높음→중간→낮음)
+  const prioOrder = {high:0, mid:1, low:2};
+  filtered.sort((a,b) =>
+    (a.order||0) - (b.order||0) ||
+    prioOrder[a.priority] - prioOrder[b.priority]
+  );
+
+  if (filtered.length === 0){
+    list.innerHTML = '<li style="text-align:center;color:var(--done)">표시할 항목이 없습니다.</li>';
+    $('#pointVal').textContent = point;
+    return;
+  }
+
+  filtered.forEach(task => {
+    const li = document.createElement('li');
+    li.className = 'task-item' + (task.done ? ' done' : '');
+    li.dataset.id = task.id;
+
+    // 체크박스
+    const chk = document.createElement('input');
+    chk.type = 'checkbox';
+    chk.checked = task.done;
+    chk.onchange = async () => {
+      task.done = !task.done;
+      point += task.done ? 10 : -10;
+      await putTaskRecord(task);
+      localStorage.setItem('todo_point', point);
+      render();
+    };
+    li.appendChild(chk);
+
+    // 제목
+    const title = document.createElement('span');
+    title.className = 'title';
+    title.textContent = task.title;
+    title.onclick = () => editTask(task);
+    li.appendChild(title);
+
+    // 우선순위 배지
+    const badge = document.createElement('span');
+    badge.className = 'badge ' + task.priority;
+    badge.textContent = {high:'높음',mid:'중간',low:'낮음'}[task.priority];
+    li.appendChild(badge);
+
+    // 액션 버튼들
+    const act = document.createElement('div');
+    act.className = 'actions';
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '수정';
+    editBtn.onclick = () => editTask(task);
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '삭제';
+    delBtn.onclick = async () => {
+      await deleteTaskRecord(task.id);
+      tasks = tasks.filter(t => t.id !== task.id);
+      render();
+    };
+    act.append(editBtn, delBtn);
+    li.appendChild(act);
+
+    list.appendChild(li);
+  });
+
+  $('#pointVal').textContent = point;
+}
+
+// ---------- 작업 추가 ----------
+$('#addBtn').onclick = async () => {
+  const txt = $('#txtInput').value.trim();
+  if (!txt) return;
+  const prio = $('#prioSelect').value;
+
+  const newTask = {
+    title   : txt,
+    priority: prio,
+    done    : false,
+    order   : tasks.length   // 현재 리스트 끝에 배치
+  };
+
+  // DB에 저장하고 id를 받아온 뒤 캐시에 푸시
+  const id = await addTaskRecord(newTask);
+  newTask.id = id;
+  tasks.push(newTask);
+  $('#txtInput').value = '';
+  render();
+};
+
+// ---------- 작업 편집 ----------
+async function editTask(task){
+  const newTitle = prompt('수정할 내용 입력', task.title);
+  if (newTitle === null) return;
+  const newPrio = prompt('우선순위(high/mid/low) 입력', task.priority);
+  if (newPrio === null) return;
+
+  task.title   = newTitle.trim();
+  task.priority= newPrio.trim();
+  await putTaskRecord(task);
+  render();
+}
+
+// ---------- 필터·검색 ----------
+$('#searchInput').oninput = () => render();
+
+$$('.filter-group button').forEach(btn => {
+  btn.onclick = e => {
+    const tgt = e.target;
+    if (tgt.dataset.filter !== undefined){
+      curFilter = tgt.dataset.filter;
+      $$('[data-filter]').forEach(b=>b.classList.remove('active'));
+      tgt.classList.add('active');
+    }
+    if (tgt.dataset.prio !== undefined){
+      curPrio = tgt.dataset.prio;
+      $$('[data-prio]').forEach(b=>b.classList.remove('active'));
+      tgt.classList.add('active');
+    }
+    render();
+  };
+});
+
+// ---------- 다크 모드 ----------
+$('#themeBtn').onclick = () => {
+  document.body.classList.toggle('dark');
+};
+
+// ---------- 백업·복구 ----------
+$('#exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a   = document.createElement('a');
+  a.href   = url;
+  a.download= `todo_backup_ Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+$('#importBtn').onclick = () => $('#importFile').click();
+
+$('#importFile').onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    try{
+      const imported = JSON.parse(ev.target.result);
+      if (!Array.isArray(imported)){
+        alert('올바른 JSON 형식이 아닙니다.');
+        return;
+      }
+      // 기존 데이터 전부 삭제 후 새 데이터 삽입
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      store.clear();                 // 기존 레코드 삭제
+      imported.forEach(item => store.add(item));
+      await tx.complete;
+      tasks = imported;
+      render();
+    }catch{
+      alert('JSON 파싱에 실패했습니다.');
+    }
+  };
+  reader.readAsText(file);
+};
+
+// ---------- 초기화 ----------
+(async () => {
+  await initDB();                 // DB 오픈
+  tasks = await getAllTasks();     // 기존 데이터 로드
+  // 포인트는 로컬스토리지에 보관(필요 시 DB에 저장해도 됩니다)
+  point = Number(localStorage.getItem('todo_point')) || 0;
+  render();
+})();
+</script>
+
+</body>
+</html>
