@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0,-scalable=no">
+<meta name="theme-color" content="#4285f4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>초등 1학년 산수 연습장</title>
+<link rel="manifest" data-manifest='{"name":"산수연습장","short_name":"산수","start_url":".","display":"standalone","background_color":"#f0f4f8","theme_color":"#4285f4","icons":[{"src":"data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%92%AA</text></svg>","sizes":"192x192","type":"image/svg+xml"}]}'>
+<style>
+  :root {
+    --bg: #f0f4f8; --card: #ffffff; --primary: #4285f4; --primary-dark: #3367d6;
+    --success: #34a853; --error: #ea4335; --text: #202124; --text-light: #5f6368;
+    --border: #dadce0; --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --radius: 16px; --btn-size: 72px; --font-main: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; font-family: var(--font-main); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; font-size: 18px; line-height: 1.5; }
+  button { font-family: inherit; border: none; background: none; cursor: pointer; font-size: 1.1rem; }
+  input { font-family: inherit; font-size: 1.5rem; text-align: center; border: 2px solid var(--border); border-radius: 8px; padding: 0.5rem; width: 100px; outline: none; }
+  input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(66,133,244,0.2); }
+  .hidden { display: none !important; }
+  .screen { display: none; flex-direction: column; align-items: center; padding: 1.5rem; width: 100%; max-width: 480px; margin: 0 auto; flex: 1; }
+  .screen.active { display: flex; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  header { background: var(--card); border-bottom: 1px solid var(--border); padding: 0.8rem 1.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: var(--shadow); }
+  h1 { margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 0.5rem; }
+  .header-btn { padding: 0.4rem 0.8rem; border-radius: 20px; color: var(--primary); font-weight: 600; transition: background 0.2s; }
+  .header-btn:active { background: rgba(66,133,244,0.1); }
+  .level-card { width: 100%; background: var(--card); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); border: 2px solid transparent; transition: all 0.2s; }
+  .level-card:active { transform: scale(0.98); border-color: var(--primary); }
+  .level-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+  .level-desc { font-size: 0.95rem; color: var(--text-light); }
+  .level-1 { color: #34a853; } .level-2 { color: #fbbc05; } .level-3 { color: #ea4335; }
+  .stats-preview { display: flex; gap: 1rem; margin-top: 1rem; font-size: 0.9rem; color: var(--text-light); justify-content: center; }
+  .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-bottom: 1.5rem; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #6ec6ff); border-radius: 4px; transition: width 0.3s ease; width: 0%; }
+  .problem-card { background: var(--card); border-radius: var(--radius); padding: 2rem; width: 100%; box-shadow: var(--shadow); text-align: center; min-height: 220px; display: flex; flex-direction: column; justify-content: center; gap: 1rem; }
+  .problem-expression { font-size: 3.5rem; font-weight: 800; letter-spacing: 0.1em; font-variant-numeric: tabular-nums; font-family: 'Roboto Mono', 'SF Mono', 'Consolas', monospace; color: var(--text); }
+  .answer-input { font-size: 3rem; font-weight: 700; width: 100%; max-width: 180px; margin: 0 auto; border-radius: 12px; padding: 0.5rem; border: 3px solid var(--border); background: #fafafa; }
+  .answer-input.correct { border-color: var(--success); background: #e6f4ea; animation: pop 0.3s; }
+  .answer-input.wrong { border-color: var(--error); background: #fce8e6; animation: shake 0.3s; }
+  @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+  .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; width: 100%; max-width: 300px; margin-top: 1rem; }
+  .key { width: 100%; aspect-ratio: 1; border-radius: 12px; background: var(--card); font-size: 1.8rem; font-weight: 700; color: var(--text); box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; transition: all 0.1s; border: 2px solid var(--border); }
+  .key:active { background: var(--primary); color: white; transform: scale(0.95); border-color: var(--primary); }
+  .key.action { background: #f1f3f4; color: var(--text-light); font-size: 1.2rem; font-weight: 600; }
+  .key.action:active { background: var(--error); color: white; }
+  .key.enter { grid-column: span 1; background: var(--primary); color: white; }
+  .key.enter:active { background: var(--primary-dark); }
+  .feedback { min-height: 1.5rem; font-weight: 600; font-size: 1.1rem; text-align: center; }
+  .feedback.correct { color: var(--success); }
+  .feedback.wrong { color: var(--error); }
+  .result-card { background: var(--card); border-radius: var(--radius); padding: 2rem; width: 100%; box-shadow: var(--shadow); text-align: center; }
+  .score-circle { width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(var(--success) calc(var(--score, 0) * 1%), #e0e0e0 0); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; position: relative; }
+  .score-circle::before { content: ''; width: 90px; height: 90px; border-radius: 50%; background: var(--card); position: absolute; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+  .score-text { position: relative; z-index: 1; font-size: 2rem; font-weight: 800; color: var(--text); }
+  .result-stats { display: flex; justify-content: space-around; margin: 1.5rem 0; color: var(--text-light); font-size: 0.95rem; }
+  .result-stats strong { display: block; font-size: 1.5rem; color: var(--text); font-weight: 700; }
+  .btn-primary { background: var(--primary); color: white; padding: 1rem 2rem; border-radius: 50px; font-size: 1.1rem; font-weight: 700; width: 100%; box-shadow: 0 4px 12px rgba(66,133,244,0.3); transition: transform 0.1s; }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-secondary { background: #f1f3f4; color: var(--text); padding: 1rem; border-radius: 50px; font-weight: 600; width: 100%; max-width: 300px; margin-top: 0.5rem; }
+  .history-list { width: 100%; display: flex; flex-direction: column; gap: 0.8rem; }
+  .history-item { background: var(--card); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--primary); }
+  .history-info { display: flex; flex-direction: column; gap: 0.2rem; }
+  .history-date { font-weight: 700; font-size: 1rem; }
+  .history-meta { font-size: 0.85rem; color: var(--text-light); display: flex; gap: 1rem; }
+  .history-score { font-size: 1.5rem; font-weight: 800; color: var(--success); }
+  .history-score.low { color: var(--error); }
+  .empty-state { text-align: center; padding: 3rem; color: var(--text-light); }
+  .delete-all-btn { color: var(--error); font-weight: 600; padding: 0.5rem; }
+  #confetti-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 100; }
+  @supports not (aspect-ratio: 1) { .key { height: var(--btn-size); } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🧮 산수 연습장</h1>
+  <button class="header-btn" onclick="showScreen('history')">기록 보기</button>
+</header>
+
+<main>
+  <!-- Start Screen -->
+  <section id="screen-start" class="screen active">
+    <div style="width:100%; max-width:480px; margin:auto; padding:1.5rem; display:flex; flex-direction:column; gap:1rem;">
+      <div class="level-card" onclick="startGame(1)">
+        <div class="level-title level-1">🌱 1단계: 10까지의 덧셈/뺄셈</div>
+        <div class="level-desc">받아올림/내림이 없는 기초 연산 (예: 5+3, 9-4)</div>
+      </div>
+      <div class="level-card" onclick="startGame(2)">
+        <div class="level-title level-2">🌿 2단계: 20까지의 덧셈/뺄셈</div>
+        <div class="level-desc">받아올림/내림이 있는 연산 (예: 8+7, 15-9)</div>
+      </div>
+      <div class="level-card" onclick="startGame(3)">
+        <div class="level-title level-3">🌳 3단계: 100까지의 덧셈/뺄셈</div>
+        <div class="level-desc">두 자리 수 연산 (예: 23+15, 50-20)</div>
+      </div>
+      <div class="stats-preview" id="quickStats"></div>
+    </div>
+  </section>
+
+  <!-- Quiz Screen -->
+  <section id="screen-quiz" class="screen">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="problem-card">
+      <div class="problem-expression" id="problemExpr">준비 중...</div>
+      <input type="text" class="answer-input" id="answerInput" inputmode="numeric" placeholder="?" readonly autocomplete="off">
+      <div class="feedback" id="feedback"></div>
+    </div>
+    <div class="keypad" id="keypad"></div>
+  </section>
+
+  <!-- Result Screen -->
+  <section id="screen-result" class="screen">
+    <div class="result-card">
+      <h2 style="margin-top:0;">수고했어요! 🎉</h2>
+      <div class="score-circle" id="scoreCircle" style="--score: 0;">
+        <span class="score-text" id="scoreText">0%</span>
+      </div>
+      <div class="result-stats">
+        <div><strong id="correctCount">0</strong>정답</div>
+        <div><strong id="wrongCount">0</strong>오답</div>
+        <div><strong id="timeTaken">0</strong>초</div>
+      </div>
+      <button class="btn-primary" onclick="showScreen('start')">처음으로</button>
+      <button class="btn-secondary" onclick="restartSameLevel()">다시 도전</button>
+    </div>
+  </section>
+
+  <!-- History Screen (버튼 영역 추가됨) -->
+  <section id="screen-history" class="screen">
+    <h2 style="margin:1rem 0 0.5rem; width:100%; max-width:480px; padding:0 1.5rem;">풀이 기록</h2>
+    <div class="history-list" id="historyList" style="width:100%; max-width:480px; padding:0 1.5rem 2rem;"></div>
+    
+    <!-- 🔽 하단 버튼 컨테이너 추가 -->
+    <div style="width:100%; max-width:480px; padding:0 1.5rem 2rem; display:flex; flex-direction:column; gap:0.5rem;">
+      <button class="btn-primary" onclick="showScreen('start')">처음으로</button>
+      <button class="delete-all-btn" onclick="clearAllHistory()">전체 기록 삭제</button>
+    </div>
+  </section>
+</main>
+
+<canvas id="confetti-canvas"></canvas>
+
+<script>
+/* ===== 1. IndexedDB Wrapper ===== */
+const DB_NAME = 'MathPracticeDB', STORE_NAME = 'history', DB_VERSION = 1;
+const dbPromise = new Promise((resolve, reject) => {
+  try {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => { console.error("IndexedDB 초기화 실패:", e.target.error); resolve(null); };
+  } catch (e) { console.error("IndexedDB 미지원:", e); resolve(null); }
+});
+
+async function saveRecord(record) {
+  const db = await dbPromise;
+  if (!db) return;
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).add(record);
+    tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+  });
+}
+async function getAllRecords() {
+  const db = await dbPromise;
+  if (!db) return [];
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).getAll();
+    req.onsuccess = () => res(req.result.reverse());
+    req.onerror = () => rej(req.error);
+  });
+}
+async function clearHistory() {
+  const db = await dbPromise;
+  if (!db) return;
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    tx.objectStore(STORE_NAME).clear();
+    tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error);
+  });
+}
+
+/* ===== 2. State & Config ===== */
+const TOTAL_QUESTIONS = 20;
+let currentLevel = 1;
+let questions = [];
+let currentIndex = 0;
+let correctCount = 0;
+let startTime = 0;
+let answers = [];
+
+const LEVEL_CONFIG = {
+  1: { max: 10, ops: ['+', '-'], name: '1단계', allowNegative: false, carry: false },
+  2: { max: 20, ops: ['+', '-'], name: '2단계', allowNegative: false, carry: true },
+  3: { max: 99, ops: ['+', '-'], name: '3단계', allowNegative: false, carry: true }
+};
+
+/* ===== 3. Core Logic ===== */
+function generateQuestion(level) {
+  const cfg = LEVEL_CONFIG[level];
+  const op = cfg.ops[Math.floor(Math.random() * cfg.ops.length)];
+  let a, b, answer;
+
+  if (op === '+') {
+    if (level === 1) { a = rand(1, 9); b = rand(1, 9 - a); answer = a + b; }
+    else if (level === 2) { a = rand(1, 19); b = rand(1, 20 - a); answer = a + b; }
+    else { a = rand(10, 50); b = rand(10, 50); if (a + b > 99) b = 99 - a; answer = a + b; }
+  } else {
+    if (level === 1) { answer = rand(1, 9); a = rand(answer, 9); b = a - answer; }
+    else if (level === 2) { answer = rand(1, 19); a = rand(answer, 20); b = a - answer; }
+    else { a = rand(20, 99); b = rand(10, a - 1); answer = a - b; }
+  }
+  return { a, b, op, answer, text: `${a} ${op} ${b} =` };
+}
+function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+/* ===== 4. UI Control ===== */
+const screens = { start: 'screen-start', quiz: 'screen-quiz', result: 'screen-result', history: 'screen-history' };
+function showScreen(name) {
+  Object.values(screens).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('active', id === screens[name]);
+  });
+  if (name === 'start') loadQuickStats();
+  if (name === 'history') renderHistory();
+}
+
+async function loadQuickStats() {
+  const records = await getAllRecords();
+  const el = document.getElementById('quickStats');
+  if (!records.length) { el.innerHTML = '<span style="color:var(--text-light);">아직 기록이 없어요. 첫 도전을 시작해보세요!</span>'; return; }
+  const recent = records[0];
+  el.innerHTML = `최근: ${recent.levelName} • ${recent.correct}/${recent.total} 정답 • ${recent.time}초`;
+}
+
+function startGame(level) {
+  currentLevel = level;
+  questions = Array.from({ length: TOTAL_QUESTIONS }, () => generateQuestion(level));
+  currentIndex = 0; correctCount = 0; answers = []; startTime = Date.now();
+  showScreen('quiz');
+  renderQuestion();
+  buildKeypad();
+}
+
+function renderQuestion() {
+  const q = questions[currentIndex];
+  document.getElementById('problemExpr').textContent = q.text;
+  const input = document.getElementById('answerInput');
+  input.value = ''; input.className = 'answer-input'; input.focus();
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('progressFill').style.width = `${((currentIndex) / TOTAL_QUESTIONS) * 100}%`;
+}
+
+function buildKeypad() {
+  const pad = document.getElementById('keypad');
+  pad.innerHTML = '';
+  const keys = ['1','2','3','4','5','6','7','8','9','⌫','0','✓'];
+  keys.forEach(k => {
+    const btn = document.createElement('button');
+    btn.className = 'key' + (k === '⌫' || k === '✓' ? ' action' : '') + (k === '✓' ? ' enter' : '');
+    btn.textContent = k;
+    btn.onclick = () => handleKey(k);
+    pad.appendChild(btn);
+  });
+}
+
+let lastInputTime = 0;
+function handleKey(key) {
+  const input = document.getElementById('answerInput');
+  const now = Date.now();
+  if (now - lastInputTime < 50) return;
+  lastInputTime = now;
+
+  if (key === '⌫') { input.value = input.value.slice(0, -1); }
+  else if (key === '✓') { submitAnswer(); }
+  else { if (input.value.length < 3) input.value += key; }
+}
+
+async function submitAnswer() {
+  const input = document.getElementById('answerInput');
+  const Val = parseInt(input.value, 10);
+  const q = questions[currentIndex];
+  const isCorrect = Val === q.answer;
+  const timeSpent = Math.round((Date.now() - startTime) / 1000);
+
+  answers.push({ ...q,Val: isNaN(Val) ? null : Val, correct: isCorrect, time: timeSpent });
+  if (isCorrect) correctCount++;
+
+  input.classList.add(isCorrect ? 'correct' : 'wrong');
+  const feedbackEl = document.getElementById('feedback');
+  feedbackEl.textContent = isCorrect ? '정답! 👍' : `오답! 정답은 ${q.answer}예요.`;
+  feedbackEl.className = 'feedback ' + (isCorrect ? 'correct' : 'wrong');
+
+  setTimeout(() => {
+    currentIndex++;
+    if (currentIndex >= TOTAL_QUESTIONS) finishGame();
+    else renderQuestion();
+  }, isCorrect ? 600 : 1200);
+}
+
+async function finishGame() {
+  const totalTime = Math.round((Date.now() - startTime) / 1000);
+  const scorePct = Math.round((correctCount / TOTAL_QUESTIONS) * 100);
+
+  const record = {
+    date: new Date().toISOString(),
+    level: currentLevel,
+    levelName: LEVEL_CONFIG[currentLevel].name,
+    correct: correctCount,
+    total: TOTAL_QUESTIONS,
+    score: scorePct,
+    time: totalTime,
+    details: answers
+  };
+  await saveRecord(record);
+
+  document.getElementById('scoreCircle').style.setProperty('--score', scorePct);
+  document.getElementById('scoreText').textContent = `${scorePct}%`;
+  document.getElementById('correctCount').textContent = correctCount;
+  document.getElementById('wrongCount').textContent = TOTAL_QUESTIONS - correctCount;
+  document.getElementById('timeTaken').textContent = totalTime;
+
+  showScreen('result');
+  if (scorePct === 100) launchConfetti(3000);
+  else if (scorePct >= 80) launchConfetti(1500);
+}
+
+function restartSameLevel() { startGame(currentLevel); }
+
+/* ===== 5. History Rendering ===== */
+async function renderHistory() {
+  const list = document.getElementById('historyList');
+  const records = await getAllRecords();
+  if (!records.length) {
+    list.innerHTML = '<div class="empty-state">아직 풀어본 기록이 없어요.<br>첫 문제를 풀어보세요! 🚀</div>';
+    return;
+  }
+  list.innerHTML = records.map(r => `
+    <div class="history-item">
+      <div class="history-info">
+        <span class="history-date">${formatDate(r.date)}</span>
+        <div class="history-meta">
+          <span>${r.levelName}</span>
+          <span>${r.correct}/${r.total} 정답</span>
+          <span>${r.time}초</span>
+        </div>
+      </div>
+      <span class="history-score ${r.score < 60 ? 'low' : ''}">${r.score}%</span>
+    </div>
+  `).join('');
+}
+function formatDate(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+async function clearAllHistory() {
+  if (confirm('정말 모든 기록을 삭제하시겠어요?')) {
+    await clearHistory();
+    renderHistory();
+    loadQuickStats();
+  }
+}
+
+/* ===== 6. Confetti Effect ===== */
+const canvas = document.getElementById('confetti-canvas');
+const ctx = canvas.getContext('2d');
+let confetti = [], animationId = null;
+function resizeCanvas() { canvas.width = innerWidth; canvas.height = innerHeight; }
+window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+function launchConfetti(duration) {
+  confetti = [];
+  const colors = ['#4285f4','#34a853','#fbbc05','#ea4335','#ff6d00','#aa00ff'];
+  for(let i=0;i<100;i++) confetti.push({
+    x: Math.random()*canvas.width, y: -20, r: Math.random()*6+4,
+    color: colors[Math.floor(Math.random()*colors.length)],
+    vx: (Math.random()-0.5)*6, vy: Math.random()*3+2, tilt: Math.random()*10
+  });
+  const end = Date.now() + duration;
+  function animate() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    confetti.forEach(c => {
+      c.y += c.vy; c.x += c.vx; c.tilt += 0.1;
+      ctx.beginPath(); ctx.fillStyle = c.color;
+      ctx.ellipse(c.x, c.y, c.r, c.r/2, c.tilt, 0, Math.PI*2); ctx.fill();
+    });
+    confetti = confetti.filter(c => c.y < canvas.height + 20);
+    if (Date.now() < end && confetti.length) animationId = requestAnimationFrame(animate);
+    else { cancelAnimationFrame(animationId); ctx.clearRect(0,0,canvas.width,canvas.height); }
+  }
+  animate();
+}
+
+/* ===== 7. Init ===== */
+loadQuickStats();
+document.getElementById('answerInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitAnswer();
+  else if (e.key === 'Backspace') handleKey('⌫');
+  else if (/^[0-9]$/.test(e.key)) handleKey(e.key);
+});
+</script>
+</body>
+</html>
