@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Projects</title>
+
+    <meta name="description" content="A collection of personal software development projects for learning and experimentation.">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --subtext: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .container {
+            width: min(1000px, 90%);
+            margin: auto;
+            padding: 60px 0;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .subtitle {
+            color: var(--subtext);
+            font-size: 1.1rem;
+            max-width: 720px;
+            margin: auto;
+        }
+
+        section {
+            margin-bottom: 60px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary);
+            padding-left: 12px;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        ul {
+            padding-left: 24px;
+        }
+
+        li {
+            margin: 10px 0;
+        }
+
+        .projects {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .project {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: .2s;
+        }
+
+        .project:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,.08);
+        }
+
+        .project h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        code {
+            background: #eef2ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        footer {
+            margin-top: 80px;
+            text-align: center;
+            color: var(--subtext);
+            font-size: .9rem;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width:600px) {
+            h1 {
+                font-size:2.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>🚀 Personal Projects</h1>
+
+    <p class="subtitle">
+        A collection of small personal projects built to strengthen software
+        development skills, explore new technologies, and experiment with new ideas.
+    </p>
+</header>
+
+<section>
+
+<h2>About</h2>
+
+<div class="card">
+
+<p>
+This repository serves as both a learning journal and a portfolio,
+documenting my continuous growth as a developer through hands-on practice.
+</p>
+
+</div>
+
+</section>
+
+<section>
+
+<h2>Purpose</h2>
+
+<div class="card">
+
+<ul>
+    <li>Practice software engineering principles and best practices.</li>
+    <li>Explore new frameworks, libraries, and technologies.</li>
+    <li>Build small, focused applications to solve real-world problems.</li>
+    <li>Continuously improve coding, testing, and project organization skills.</li>
+    <li>Maintain a record of personal learning and development.</li>
+</ul>
+
+</div>
+
+</section>
+
+<section>
+
+<h2>Projects</h2>
+
+<div class="projects">
+
+    <div class="project">
+        <h3>📋 todo-list</h3>
+        <p>
+            A basic Todo List application for learning application
+            architecture and CRUD operations.
+        </p>
+    </div>
+
+    <div class="project">
+        <h3>📌 kanban_board</h3>
+        <p>
+            Tracks the progress of all projects using a Kanban workflow.
+        </p>
+    </div>
+
+    <div class="project">
+        <h3>🧮 arithmetic-practice</h3>
+        <p>
+            A simple application for practicing basic arithmetic operations.
+        </p>
+    </div>
+
+</div>
+
+</section>
+
+<section>
+
+<h2>License</h2>
+
+<div class="card">
+
+<p>
+This repository is intended for educational and personal learning purposes.
+</p>
+
+<br>
+
+<p>
+Unless otherwise specified, all projects are available under the
+<strong>MIT License</strong>.
+</p>
+
+</div>
+
+</section>
+
+<footer>
+
+<p>
+Made with 😁 using GitHub Pages
+</p>
+
+</footer>
+
+</div>
+
+</body>
+</html>
